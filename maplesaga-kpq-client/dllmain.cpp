@@ -25,15 +25,21 @@ int mainThread()
 
     detour((char*)0x740C95, hookHpMp_Assembly, 5);
     //detour((char*)0x4751B2, hookSend_Assembly, 5);
+    detour((char*)0x04754C1, hookRecv_Assembly, 5);
+    detour((char*)0x641940, autoNpc_Assembly, 5);
+    detour((char*)0x6417FF, autoNpcSecond_Assembly, 5);
 
-    //while (1)
-    //{
-    //    std::cout << "HP: " << client.variables.charHp << std::endl;
-    //    std::cout << "MP: " << client.variables.charMp << std::endl;
-    //    Sleep(500);
-    //}
 
-    client.runServer();
+    std::thread mainThread(&Client::UpdateAllVariablesLoop, client);
+    std::thread secondThread(&Client::runServer, client);
+
+    while (1)
+    {
+        Sleep(1500);
+    }
+
+
+
     return 0;
 }
 

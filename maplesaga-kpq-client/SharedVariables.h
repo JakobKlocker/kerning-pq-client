@@ -11,11 +11,12 @@ struct SharedVariables {
 	DWORD processId;
 	DWORD TCPPort;
 	Point character;
-	Point mob;
-	Point item;
-	DWORD itemCount;
 	DWORD charHp;
 	DWORD charMp;
+	Point mob;
+	DWORD mobCount;
+	Point item;
+	DWORD itemCount;
 	DWORD mapId;
 	DWORD currentTickets;
 	DWORD ticketsNeeded;

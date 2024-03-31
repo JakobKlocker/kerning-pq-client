@@ -36,6 +36,9 @@
     <ClInclude Include="generalFunctions.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="shareData.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -51,6 +54,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="generalFunctions.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="shareData.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

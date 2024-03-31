@@ -146,6 +146,7 @@
     <ClInclude Include="generalFunctions.h" />
     <ClInclude Include="Hacks.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="shareData.h" />
     <ClInclude Include="SharedVariables.h" />
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +160,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="shareData.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

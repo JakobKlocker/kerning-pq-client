@@ -47,3 +47,17 @@ std::vector<unsigned char> hexStringToBytes(const std::string& hexString) {
     return bytes;
 }
 
+void removeSubstring(std::string& str, const std::string& substr) {
+    size_t pos = 0;
+    while ((pos = str.find(substr, pos)) != std::string::npos) {
+        str.erase(pos, substr.length());
+    }
+}
+
+void replaceSubstring(std::string& str, const std::string& toReplace, const std::string& replacement) {
+    size_t pos = 0;
+    while ((pos = str.find(toReplace, pos)) != std::string::npos) {
+        str.replace(pos, toReplace.length(), replacement);
+        pos += replacement.length();
+    }
+}

@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "Client.h"
 
+typedef int(__thiscall* Decrypt)(int* addr, int zero);
+void* Decrypt_Addr = (void*)0x45E2EB;
+Decrypt CallDecrypt = reinterpret_cast<Decrypt>(Decrypt_Addr);
+
 Client::Client()
 {
 	DWORD pId = GetCurrentProcessId();
@@ -46,20 +50,6 @@ int Client::createMappingHandle()
 		//GetLastError();
 		return 1;
 	}
-
-	//LPCTSTR pBuf;
-
-
-	//pBuf = (LPTSTR)MapViewOfFile(this->hMappedFile,   // handle to map object
-	//	FILE_MAP_ALL_ACCESS, // read/write permission
-	//	0,
-	//	0,
-	//	sizeof(this->variables));
-
-	//this->variables.processId = 1337;
-
-	//CopyMemory((PVOID)pBuf, &this->variables, (sizeof(this->variables)));
-
 
 	return 0;
 }
@@ -107,7 +97,7 @@ int Client::runServer()
 		}
 
 		// Save correct Port in structure
-		
+
 		this->variables.TCPPort = port - 1;
 
 		// Create a SOCKET for the server to listen for client connections.
@@ -167,7 +157,7 @@ int Client::runServer()
 	return (0);
 }
 
-void Client::determineAction(const std::string &receivedStr)
+void Client::determineAction(const std::string& receivedStr)
 {
 	std::istringstream iss(receivedStr);
 	std::vector<std::string> words {
@@ -184,7 +174,11 @@ void Client::determineAction(const std::string &receivedStr)
 	const std::string& action = words[0];
 	if (action == "sendpacket") {
 		if (words.size() >= 2) {
-			sendPacket(words[1]);
+			std::string restOfTheString = "";
+			for (size_t i = 1; i < words.size(); ++i) {
+				restOfTheString += words[i];
+			}
+			sendPacket(restOfTheString);
 		}
 		else {
 			std::cerr << "Incomplete sendpacket command.\n";
@@ -192,5 +186,145 @@ void Client::determineAction(const std::string &receivedStr)
 	}
 	else {
 		std::cerr << "Unknown action: " << action << std::endl;
+	}
+}
+
+
+void Client::mapVariableStructure()
+{
+	LPCTSTR pBuf;
+
+	pBuf = (LPCTSTR)MapViewOfFile(this->hMappedFile,
+		FILE_MAP_ALL_ACCESS,
+		0,
+		0,
+		sizeof(this->variables));
+
+	if (pBuf == NULL)
+	{
+		std::cout << "Unable to map file" << std::endl;
+		return;
+	}
+
+	CopyMemory((PVOID)pBuf, &this->variables, sizeof(this->variables));
+
+	UnmapViewOfFile(pBuf);
+}
+
+void Client::getMapId()
+{
+	DWORD* mapId = *(DWORD**)0x979268;
+	mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
+	this->variables.mapId = *mapId;
+}
+
+void Client::getNextMobXY()
+{
+	DWORD mobX = 0;
+	DWORD mobY = 0;
+	DWORD* mob = *(DWORD**)0x97F57C;
+
+	mob = *reinterpret_cast<DWORD**>(reinterpret_cast<char*>(mob) + 0x28);
+	if (!mob)
+		return;
+
+	mob = *reinterpret_cast<DWORD**>(reinterpret_cast<char*>(mob) + 0x4);
+	if (!mob)
+		return;
+
+	mobX = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mob) + 0x480);
+	mobY = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mob) + 0x484);
+
+	this->variables.mob.x = mobX;
+	this->variables.mob.y = mobY;
+
+	std::cout << "MobX: " << mobX << "MobY: " << mobY << std::endl;
+}
+
+void Client::getPlayerXY()
+{
+	DWORD* playerBase = *(DWORD**)0x979268;
+	if (!playerBase)
+		return;
+
+	DWORD playerX = 0;
+	DWORD playerY = 0;
+
+	playerX = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(playerBase) + 0x59C);
+	playerY = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(playerBase) + 0x5A0);
+
+	this->variables.character.x = playerX;
+	this->variables.character.y = playerY;
+
+
+	std::cout << "Char X: " << playerX << std::endl;
+}
+
+void Client::getMobCount()
+{
+	DWORD* mob = *(DWORD**)0x97F57C;
+	this->variables.mobCount = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mob) + 0x24);
+
+	std::cout << "Mob Count: " << this->variables.mobCount << std::endl;
+}
+
+
+void Client::getItemXY()
+{
+	DWORD* item = *(DWORD**)0x9791D0;
+	DWORD* itemXPtr;
+	DWORD* itemYPtr;
+	DWORD itemX;
+	DWORD itemY;
+
+	if (!item)
+		return;
+
+	item = *reinterpret_cast<DWORD**>(reinterpret_cast<char*>(item) + 0x2C);
+	if (!item)
+		return;
+
+	item = *reinterpret_cast<DWORD**>(reinterpret_cast<char*>(item) + 0x4);
+	if (!item)
+		return;
+
+	// call decrypt function with item + 68 for Y and item + 74 for X
+	itemXPtr = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(item) + 0x74);
+	if (!itemXPtr)
+		return;
+
+	itemYPtr = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(item) + 0x68);
+	if (!itemYPtr)
+		return;
+
+	//itemX = CallDecrypt((int*)itemXPtr, 0);
+	//itemY = CallDecrypt((int*)itemYPtr, 0);
+
+	////this->variables.item.x = itemX;
+	////this->variables.item.y = itemY;
+
+	std::cout << "itemX: "  << "   ItemY: " << std::endl;
+}
+
+void Client::getItemCount()
+{
+	DWORD* item = *(DWORD**)0x9791D0;
+	this->variables.itemCount = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(item) + 0x28);
+
+	std::cout << "ItemCount: " << this->variables.itemCount << std::endl;
+}
+
+void Client::UpdateAllVariablesLoop()
+{
+	while (1)
+	{
+		getMapId();
+		getNextMobXY();
+		getItemXY();
+		getItemCount();
+		getPlayerXY();
+		getMobCount();
+		this->mapVariableStructure();
+		Sleep(50);
 	}
 }

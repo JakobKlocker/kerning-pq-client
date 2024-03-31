@@ -30,4 +30,16 @@ public:
 	Client();
 	int createMappingHandle();
 	int runServer();
+	void mapVariableStructure();
+
+	//Get all needed data for structure
+	void UpdateAllVariablesLoop();
+
+
+	void getMapId();
+	void getNextMobXY();
+	void getPlayerXY();
+	void getMobCount();
+	void getItemXY();
+	void getItemCount();
 };

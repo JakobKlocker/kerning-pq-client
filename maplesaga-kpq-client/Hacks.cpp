@@ -2,16 +2,6 @@
 #include "Hacks.h"
 
 
-ULONG clientSocketAddr = 0x9784C4;
-
-
-typedef void(__thiscall* PacketSend)(PVOID clientSocket, COutPacket* packet);
-PVOID* ClientSocket = reinterpret_cast<PVOID*>(clientSocketAddr);
-void* sendHook = (void*)0x4751B2;
-PacketSend Send = reinterpret_cast<PacketSend>(sendHook);
-
-void callSendPacket(BYTE packet[], int size);
-
 
 DWORD TMP_HOOKHPMP = 0;
 DWORD HPHOOKRET_HOOKMPHP= 0x00740CA4;
@@ -77,7 +67,6 @@ char* BUFFER_HOOKSEND;
 int PACKETLEN_HOOKSEND;
 void* CALLER_HOOKSEND;
 DWORD HOOKSENDRET_HOOKSEND= 0x04751B7;
-int i = 0;
 void __declspec(naked) hookSend_Assembly()
 {
     __asm {
@@ -92,15 +81,165 @@ void __declspec(naked) hookSend_Assembly()
         mov eax, 0x896984
         pushad
         pushfd
-
     }
-    
     __asm {
         popfd
         popad
         jmp HOOKSENDRET_HOOKSEND
     }
 }
+
+DWORD RECVHOOK_HOOKRECV = 0x04754C1;
+DWORD RECVHOOKRET_HOOKRECV = 0x04754C1 + 5;
+DWORD DECODE1_HOOKRECV = 0x00424561;
+
+unsigned char* RECVHOOKPRT_HOOKRECV;
+DWORD PLENGHT_HOOKRECV = 0;
+void setCouponsNeeded()
+{
+    const unsigned char expectedHeader[] = { 0xED, 0x00 };
+    const size_t headerSize = sizeof(expectedHeader);
+    int result = std::memcmp(RECVHOOKPRT_HOOKRECV, expectedHeader, headerSize);
+
+    std::string str;
+
+    if (result == 0) {
+        RECVHOOKPRT_HOOKRECV = RECVHOOKPRT_HOOKRECV + 10;
+        str.assign((char *)RECVHOOKPRT_HOOKRECV, PLENGHT_HOOKRECV - 10);
+        removeSubstring(str, "#b");
+        removeSubstring(str, "#k");
+        replaceSubstring(str, "\r\n", " ");
+
+        std::cout << str << std::endl;
+
+        int amount = checkCouponAmount(str);
+        if (amount)
+        {
+            std::cout << "Tickets Requiered: " << amount << std::endl;
+            client.variables.ticketsNeeded = amount;
+        }
+    }
+}
+
+int checkCouponAmount(std::string& const str)
+{
+    if (str.find("STR you receive after advancing as a Warrior") != std::string::npos)
+        return 35;
+    else if (str.find("DEX you receive after advancing as a Bowman") != std::string::npos)
+        return 25;
+    else if (str.find("INT you receive after advancing as a Magician") != std::string::npos)
+        return 20;
+    else if (str.find("DEX you receive after advancing as a Thief") != std::string::npos)
+        return 25;
+    else if (str.find("minimum level required to leave Maple Island") != std::string::npos)
+        return 8;
+    else if (str.find("minimum level required to advance to 2nd job") != std::string::npos)
+        return 30;
+    return 0;
+
+    
+}
+
+
+void __declspec(naked) hookRecv_Assembly()
+{
+    __asm {
+        push ecx
+        push eax
+        mov edx, [ecx + 0x14]
+        mov eax, [ecx + 0x8]
+        movzx ecx, word ptr[ecx + 0x0C]
+        sub ecx, edx
+        mov[PLENGHT_HOOKRECV], ecx
+        add eax, edx
+        mov[RECVHOOKPRT_HOOKRECV], eax
+        cmp[PLENGHT_HOOKRECV], 271
+        jne Process
+        mov ecx, dword ptr[RECVHOOKPRT_HOOKRECV]
+        mov al, [ecx]
+        cmp al, 0xED
+        je xorit
+        Process :
+        pop eax
+        pop ecx
+        call DECODE1_HOOKRECV
+        jmp noxor
+        xorit :
+        pop eax
+        pop ecx
+        call DECODE1_HOOKRECV
+        xor eax, eax
+        noxor:
+        pushfd
+        pushad
+    }
+    setCouponsNeeded();
+    __asm {
+        popad
+        popfd
+        jmp RECVHOOKRET_HOOKRECV
+    }
+}
+
+DWORD JMPTO_AUTONPC = 0x641950;
+void __declspec(naked) autoNpc_Assembly()
+{
+    __asm {
+        mov eax, 6
+        jmp JMPTO_AUTONPC
+    }
+}
+
+
+DWORD JMPTO_AUTONPCSECOND = 0x64180F;
+void __declspec(naked) autoNpcSecond_Assembly()
+{
+    __asm {
+        mov eax, 0x2001
+        xor ebx, ebx
+        xor edx, edx
+        jmp JMPTO_AUTONPCSECOND
+    }
+}
+
+void sendPacket(std::string& packetStr)
+{
+    std::vector<unsigned char> bytes = hexStringToBytes(packetStr);
+    unsigned char* packet = bytes.data();
+    std::cout << "Sendpacket called with: " << packetStr << std::endl;
+    callSendPacket(packet, bytes.size());
+}
+
+
+void detour(void* src, void* dest, int len)
+{
+    std::cout << "In detour" << std::endl;
+    DWORD  curProtection;
+	VirtualProtect(src, len, PAGE_EXECUTE_READWRITE, &curProtection);
+
+	DWORD how_far = (DWORD)dest - (DWORD)src - 5;
+	memset(src, 0x90, len);
+	*(char*)src = (char)'\xE9';
+	*(DWORD*)((DWORD)src + 1) = how_far;
+	VirtualProtect(src, len, curProtection, &curProtection);
+    std::cout << "detour done" << std::endl;
+}
+
+ULONG CLIENTSOCKETADDR_CALLSENDPACKET = 0x9784C4;
+PVOID* CLIENTSOCKET_CALLSENDPACKET = reinterpret_cast<PVOID*>(CLIENTSOCKETADDR_CALLSENDPACKET);
+void* SENDHOOK_CALLSENDPACKET = (void*)0x4751B2;
+PacketSend SEND_CALLSENDPACKET = reinterpret_cast<PacketSend>(SENDHOOK_CALLSENDPACKET);
+void callSendPacket(BYTE packet[], int size)
+{
+    COutPacket Packet;
+    SecureZeroMemory(&Packet, sizeof(COutPacket));
+    Packet.Size = size;
+    Packet.data = (void*)packet;
+    SEND_CALLSENDPACKET(*CLIENTSOCKET_CALLSENDPACKET, &Packet);
+}
+
+
+
 
 
 // below not needed anymore, prepaired + called function directly in c++
@@ -132,35 +271,3 @@ void __declspec(naked) hookSend_Assembly()
 //        ret
 //    }
 //}
-
-void sendPacket(std::string& packetStr)
-{
-    std::vector<unsigned char> bytes = hexStringToBytes(packetStr);
-    unsigned char* packet = bytes.data();
-    std::cout << "Sendpacket called with: " << packetStr << std::endl;
-    callSendPacket(packet, bytes.size());
-}
-
-
-void detour(void* src, void* dest, int len)
-{
-    std::cout << "In detour" << std::endl;
-    DWORD  curProtection;
-	VirtualProtect(src, len, PAGE_EXECUTE_READWRITE, &curProtection);
-
-	DWORD how_far = (DWORD)dest - (DWORD)src - 5;
-	memset(src, 0x90, len);
-	*(char*)src = (char)'\xE9';
-	*(DWORD*)((DWORD)src + 1) = how_far;
-	VirtualProtect(src, len, curProtection, &curProtection);
-    std::cout << "detour done" << std::endl;
-}
-
-void callSendPacket(BYTE packet[], int size)
-{
-    COutPacket Packet;
-    SecureZeroMemory(&Packet, sizeof(COutPacket));
-    Packet.Size = size;
-    Packet.data = (void*)packet;
-    Send(*ClientSocket, &Packet);
-}
