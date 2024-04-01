@@ -122,6 +122,7 @@ DWORD DECODE1_HOOKRECV = 0x00424561;
 
 unsigned char* RECVHOOKPRT_HOOKRECV;
 DWORD PLENGHT_HOOKRECV = 0;
+DWORD REQUIREDTICKETS = 0;
 void setCouponsNeeded()
 {
     const unsigned char expectedHeader[] = { 0xED, 0x00 };
@@ -143,7 +144,7 @@ void setCouponsNeeded()
         if (amount)
         {
             std::cout << "Tickets Requiered: " << amount << std::endl;
-            client.variables.ticketsNeeded = amount;
+            REQUIREDTICKETS = amount;
         }
     }
 }
@@ -227,6 +228,57 @@ void __declspec(naked) autoNpcSecond_Assembly()
         xor edx, edx
         jmp JMPTO_AUTONPCSECOND
     }
+}
+
+
+DWORD GETCHARACTERDATA = 0x458C4F;
+DWORD UNKNOWNCALL = 0x46575E;
+DWORD GETDATA = 0x45E2EB;
+DWORD CharDataPTR = 0x97E4B0;
+int getItemIdBySlot(int Tab, int Slot) {
+    int itemID = 0;
+    unsigned char* ZMap = static_cast<unsigned char*>(std::malloc(250));
+    __asm {
+        pushad
+        push Slot //Slot
+        push Tab //Tab Equip(1), Use(2), Set-Up(3), Etc(4), Cash(5)
+        push ZMap
+        mov ecx, [CharDataPTR]
+        mov ecx, [ecx]
+        cmp ecx, 0
+        je done
+
+        call GETCHARACTERDATA
+
+        mov esi, [eax + 4]
+        cmp esi, 0
+        je done
+        mov ecx, ZMap
+        call UNKNOWNCALL
+
+        lea edi, [esi + 0xC]
+        mov ecx, edi
+        call GETDATA
+
+        mov[itemID], eax
+        done:
+        popad
+    }
+    std::free(ZMap);
+    return itemID;
+}
+
+DWORD CALLTOGETDATA = 0x84C94E;
+int getItemCountByID(DWORD ItemID)
+{
+    int itemCount;
+    __asm {
+        mov ecx, 0x97C418
+        push ItemID
+        call CALLTOGETDATA
+        mov[itemCount], eax
+    }
+    return itemCount;
 }
 
 void sendPacket(std::string& packetStr)

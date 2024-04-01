@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CLIENT_H
+#define CLIENT_H
 #include <Windows.h>
 #include <string>
 #include <winsock2.h>
@@ -47,3 +49,4 @@ public:
 
 	void enableAutoAttack();
 };
+#endif

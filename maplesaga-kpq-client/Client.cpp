@@ -83,7 +83,7 @@ int Client::runServer()
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
 
-
+	restartSocket:
 	do {
 		iResult = getaddrinfo(NULL, std::to_string(PORT).c_str(), &hints, &result);
 		std::cout << "trying port: " << PORT << " iResult:" << iResult << std::endl;
@@ -94,7 +94,6 @@ int Client::runServer()
 			WSACleanup();
 			return -1;
 		}
-		PORT--;
 
 		// Create a SOCKET for the server to listen for client connections.
 		ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -114,6 +113,7 @@ int Client::runServer()
 			WSACleanup();
 		}
 	} while (iResult != 0 && PORT <= 1337 + 2);
+	PORT--;
 
 	freeaddrinfo(result);
 
@@ -150,9 +150,12 @@ int Client::runServer()
 		Sleep(5);
 	} while (iResult != 0 && iResult != 0xffffffff); // If Connection lost iResult = 0xffffffff
 	std::cout << "Connection to Client lost.\n";
+	goto restartSocket;
 	return (0);
 }
 
+int ItemID = 0;
+int ItemCountID = 0;
 void Client::determineAction(const std::string& receivedStr)
 {
 	std::istringstream iss(receivedStr);
@@ -216,18 +219,32 @@ void Client::determineAction(const std::string& receivedStr)
 	}
 	else if (action == "loot")
 	{
-			if (words.size() == 2) { // Check if there are enough arguments
-				if (words[1] == "True")
-				{
-					std::cout << "True Loot..." << std::endl;
-					CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoLoot, nullptr, 0, nullptr);
-				}
-				else
-				{
-					autoLootOn_callPressButton = false;
-					std::cout << "Auto Loot Disabled" << std::endl;
-				}
+		if (words.size() == 2) { // Check if there are enough arguments
+			if (words[1] == "True")
+			{
+				std::cout << "True Loot..." << std::endl;
+				CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoLoot, nullptr, 0, nullptr);
 			}
+			else
+			{
+				autoLootOn_callPressButton = false;
+				std::cout << "Auto Loot Disabled" << std::endl;
+			}
+		}
+	}
+	else if (action == "getitemid") {
+		if (words.size() == 3) { // Check if there are enough arguments
+			int tab, slot;
+			std::istringstream(words[1]) >> tab && std::istringstream(words[2]) >> slot;
+			ItemID = getItemIdBySlot(tab, slot);
+		}
+	}
+	else if (action == "getcount") {
+		if (words.size() == 2) { // Check if there are enough arguments
+			int itemID;
+			std::istringstream(words[1]) >> itemID;
+			ItemCountID = getItemCountByID(itemID);
+		}
 	}
 	else if (action == "portal")
 	{
@@ -266,6 +283,9 @@ void Client::getMapId()
 	mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
 	this->variables.mapId = *mapId;
 	this->variables.TCPPort = PORT;
+	this->variables.itemID = ItemID;
+	this->variables.itemCountByID = ItemCountID;
+	this->variables.ticketsNeeded = REQUIREDTICKETS;
 }
 
 void Client::getNextMobXY()

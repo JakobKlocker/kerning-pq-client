@@ -1,11 +1,12 @@
 #pragma once
+#ifndef Hacks_H
+#define Hacks_H
 #include <iomanip>
 
 #include "generalFunctions.h"
 #include "Client.h"
 
 extern Client client;
-
 void hookHpMp_Assembly();
 void hookSend_Assembly();
 
@@ -24,8 +25,8 @@ void teleportPlayer(DWORD posX, DWORD posY);
 void callAutoAttack();
 void callAutoLoot();
 void callEnterPortal();
-
-
+int getItemCountByID(DWORD ItemID);
+int getItemIdBySlot(int Tab, int Slot);
 struct COutPacket {
 	int zero;
 	void* data;
@@ -39,3 +40,5 @@ typedef int(__stdcall* TeleportFuncPtr)(int, DWORD, DWORD);
 
 typedef void(__thiscall* PressKey)(DWORD*, int, int);
 
+extern DWORD REQUIREDTICKETS;
+#endif

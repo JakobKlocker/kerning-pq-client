@@ -20,5 +20,7 @@ struct SharedVariables {
 	DWORD mapId;
 	DWORD currentTickets;
 	DWORD ticketsNeeded;
+	DWORD itemID;
+	DWORD itemCountByID;
 	bool isPartyLeader;
 };
