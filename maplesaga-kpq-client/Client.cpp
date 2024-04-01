@@ -203,15 +203,36 @@ void Client::determineAction(const std::string& receivedStr)
 		}
 	}
 	else if (action == "attack")
+	{
 		if (words.size() == 2) { // Check if there are enough arguments
 			if (words[1] == "True")
-				std::thread attackOn(callAutoAttack);
+				CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoAttack, nullptr, 0, nullptr);
 			else
 			{
 				autoAttackOn_callPressButton = false;
 				std::cout << "Auto Attack Disabled" << std::endl;
 			}
 		}
+	}
+	else if (action == "loot")
+	{
+			if (words.size() == 2) { // Check if there are enough arguments
+				if (words[1] == "True")
+				{
+					std::cout << "True Loot..." << std::endl;
+					CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoLoot, nullptr, 0, nullptr);
+				}
+				else
+				{
+					autoLootOn_callPressButton = false;
+					std::cout << "Auto Loot Disabled" << std::endl;
+				}
+			}
+	}
+	else if (action == "portal")
+	{
+		callEnterPortal();
+	}
 	else {
 		std::cerr << "Unknown action: " << action << std::endl;
 	}
@@ -266,7 +287,7 @@ void Client::getNextMobXY()
 	this->variables.mob.x = mobX;
 	this->variables.mob.y = mobY;
 
-	std::cout << "MobX: " << mobX << "MobY: " << mobY << std::endl;
+	//std::cout << "MobX: " << mobX << "MobY: " << mobY << std::endl;
 }
 
 void Client::getPlayerXY()
@@ -285,7 +306,7 @@ void Client::getPlayerXY()
 	this->variables.character.y = playerY;
 
 
-	std::cout << "Char X: " << playerX << std::endl;
+	//std::cout << "Char X: " << playerX << std::endl;
 }
 
 void Client::getMobCount()
@@ -293,7 +314,7 @@ void Client::getMobCount()
 	DWORD* mob = *(DWORD**)0x97F57C;
 	this->variables.mobCount = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mob) + 0x24);
 
-	std::cout << "Mob Count: " << this->variables.mobCount << std::endl;
+	//std::cout << "Mob Count: " << this->variables.mobCount << std::endl;
 }
 
 
@@ -334,7 +355,7 @@ void Client::getItemXY()
 	this->variables.item.x = itemX;
 	this->variables.item.y = itemY;
 
-	std::cout << "itemX: "  << itemX << "   ItemY: " << itemY << std::endl;
+	//std::cout << "itemX: "  << itemX << "   ItemY: " << itemY << std::endl;
 }
 
 void Client::getItemCount()
@@ -342,7 +363,7 @@ void Client::getItemCount()
 	DWORD* item = *(DWORD**)0x9791D0;
 	this->variables.itemCount = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(item) + 0x28);
 
-	std::cout << "ItemCount: " << this->variables.itemCount << std::endl;
+	//std::cout << "ItemCount: " << this->variables.itemCount << std::endl;
 }
 
 void Client::UpdateAllVariablesLoop()

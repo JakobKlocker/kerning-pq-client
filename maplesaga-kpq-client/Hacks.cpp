@@ -266,7 +266,6 @@ void callSendPacket(BYTE packet[], int size)
 }
 
 PressKey PRESSKEY_CALLPRESSBUTTON = (PressKey)0x7A4711;
-
 std::atomic<bool> autoAttackOn_callPressButton(false);
 void callAutoAttack()
 {
@@ -274,14 +273,42 @@ void callAutoAttack()
     int arg1 = 0x1D0030;
     int arg2 = 0x00000011;
 
+    autoAttackOn_callPressButton = true;
 
-    while (1)
+    while (autoAttackOn_callPressButton)
     {
-        arg1 = 0x00000011;
-        arg2 = 0x1D0030;
         PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
         Sleep(50);
     }
+    ExitThread(1);
+}
+
+std::atomic<bool> autoLootOn_callPressButton(false);
+void callAutoLoot()
+{
+    std::cout << "Inside AUto Loot" << std::endl;
+    DWORD* thisCallPress = *(DWORD**)0x978358;
+    int arg1 = 0x0000005A;
+    int arg2 = 0x2C0000;
+
+    autoLootOn_callPressButton = true;
+
+    while (autoLootOn_callPressButton)
+    {
+        PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
+        Sleep(50);
+    }
+    ExitThread(1);
+}
+
+void callEnterPortal()
+{
+    std::cout << "Inside Use Portal" << std::endl;
+    DWORD* thisCallPress = *(DWORD**)0x978358;
+    int arg1 = 0x00000026;
+    int arg2 = 0x1480000;
+
+    PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
 }
 
 

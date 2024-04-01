@@ -20,6 +20,7 @@ class Client;
 #include "SharedVariables.h"
 
 extern std::atomic<bool> autoAttackOn_callPressButton;
+extern std::atomic<bool> autoLootOn_callPressButton;
 
 class Client
 {

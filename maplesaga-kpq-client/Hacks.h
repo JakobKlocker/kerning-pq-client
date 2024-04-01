@@ -22,6 +22,9 @@ void callSendPacket(BYTE packet[], int size);
 int checkCouponAmount(std::string& const str);
 void teleportPlayer(DWORD posX, DWORD posY);
 void callAutoAttack();
+void callAutoLoot();
+void callEnterPortal();
+
 
 struct COutPacket {
 	int zero;
