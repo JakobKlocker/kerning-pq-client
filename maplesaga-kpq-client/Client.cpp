@@ -265,6 +265,7 @@ void Client::getMapId()
 	DWORD* mapId = *(DWORD**)0x979268;
 	mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
 	this->variables.mapId = *mapId;
+	this->variables.TCPPort = PORT;
 }
 
 void Client::getNextMobXY()
