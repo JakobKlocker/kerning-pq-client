@@ -2,6 +2,33 @@
 #include "Hacks.h"
 
 
+TeleportFuncPtr TELEPORTFUNC_TELEPORTPLAYER = (TeleportFuncPtr)0x007F5330;
+void teleportPlayer(DWORD posX, DWORD posY) {
+    DWORD* edi = reinterpret_cast<DWORD*>(0x00978358);
+    DWORD* ptr = reinterpret_cast<DWORD*>(*edi + 0xD20);
+    TELEPORTFUNC_TELEPORTPLAYER(*ptr, posX, posY);
+}
+
+DWORD JMPTO_AUTOROPEENABLE = 0x804761;
+void __declspec(naked) autoRopeEnable_Assembly()
+{
+    __asm {
+        jmp JMPTO_AUTOROPEENABLE
+    }
+}
+
+DWORD JMPTO1_AUTOROPEDISABLE = 0x804873;
+DWORD JMPTO2_AUTOROPEDISABLE = 0x804751;
+void __declspec(naked) autoRopeDisable_Assembly()
+{
+    __asm {
+        jnl greater_or_equal
+        jmp JMPTO2_AUTOROPEDISABLE
+        greater_or_equal :
+        jmp JMPTO1_AUTOROPEDISABLE
+    }
+}
+
 
 DWORD TMP_HOOKHPMP = 0;
 DWORD HPHOOKRET_HOOKMPHP= 0x00740CA4;
@@ -238,8 +265,24 @@ void callSendPacket(BYTE packet[], int size)
     SEND_CALLSENDPACKET(*CLIENTSOCKET_CALLSENDPACKET, &Packet);
 }
 
+PressKey PRESSKEY_CALLPRESSBUTTON = (PressKey)0x7A4711;
+
+std::atomic<bool> autoAttackOn_callPressButton(false);
+void callAutoAttack()
+{
+    DWORD* thisCallPress = *(DWORD**)0x978358;
+    int arg1 = 0x1D0030;
+    int arg2 = 0x00000011;
 
 
+    while (1)
+    {
+        arg1 = 0x00000011;
+        arg2 = 0x1D0030;
+        PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
+        Sleep(50);
+    }
+}
 
 
 // below not needed anymore, prepaired + called function directly in c++

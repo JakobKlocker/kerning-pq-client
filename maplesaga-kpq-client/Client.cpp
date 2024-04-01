@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "Client.h"
 
-typedef int(__thiscall* Decrypt)(int* addr, int zero);
-void* Decrypt_Addr = (void*)0x45E2EB;
-Decrypt CallDecrypt = reinterpret_cast<Decrypt>(Decrypt_Addr);
+
 
 Client::Client()
 {
@@ -56,6 +54,8 @@ int Client::createMappingHandle()
 
 
 //https://learn.microsoft.com/en-us/windows/win32/winsock/complete-client-code
+
+int PORT = 1337;
 int Client::runServer()
 {
 	WSADATA wsaData;
@@ -65,7 +65,6 @@ int Client::runServer()
 	struct addrinfo* result = NULL;
 	struct addrinfo hints;
 	int iResult;
-	int port = 1337;
 	char recvbuf[500];
 
 	std::cout << "running server..." << std::endl;
@@ -86,19 +85,16 @@ int Client::runServer()
 
 
 	do {
-		iResult = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &result);
-		std::cout << "trying port: " << port << " iResult:" << iResult << std::endl;
-		port++;
+		iResult = getaddrinfo(NULL, std::to_string(PORT).c_str(), &hints, &result);
+		std::cout << "trying port: " << PORT << " iResult:" << iResult << std::endl;
+		PORT++;
 
 		if (iResult != 0) {
 			printf("getaddrinfo failed with error: %d\n", iResult);
 			WSACleanup();
 			return -1;
 		}
-
-		// Save correct Port in structure
-
-		this->variables.TCPPort = port - 1;
+		PORT--;
 
 		// Create a SOCKET for the server to listen for client connections.
 		ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -117,7 +113,7 @@ int Client::runServer()
 			closesocket(ListenSocket);
 			WSACleanup();
 		}
-	} while (iResult != 0 && port <= 1337 + 2);
+	} while (iResult != 0 && PORT <= 1337 + 2);
 
 	freeaddrinfo(result);
 
@@ -184,6 +180,38 @@ void Client::determineAction(const std::string& receivedStr)
 			std::cerr << "Incomplete sendpacket command.\n";
 		}
 	}
+	else if (action == "teleport") {
+		if (words.size() == 3) { // Check if there are enough arguments
+			int x, y;
+			std::istringstream(words[1]) >> x && std::istringstream(words[2]) >> y;
+			teleportPlayer(x, y);
+		}
+		else {
+			std::cerr << "Incomplete teleport command.\n";
+		}
+	}
+	else if (action == "rope") {
+		std::cout << "Size: " << words.size() << std::endl;
+		if (words.size() == 2) { // Check if there are enough arguments
+			if (words[1] == "True")
+				detour((char*)0x80474C, autoRopeEnable_Assembly, 6);
+			else
+				detour((char*)0x80474C, autoRopeDisable_Assembly, 6);
+		}
+		else {
+			std::cerr << "Incomplete rope command.\n";
+		}
+	}
+	else if (action == "attack")
+		if (words.size() == 2) { // Check if there are enough arguments
+			if (words[1] == "True")
+				std::thread attackOn(callAutoAttack);
+			else
+			{
+				autoAttackOn_callPressButton = false;
+				std::cout << "Auto Attack Disabled" << std::endl;
+			}
+		}
 	else {
 		std::cerr << "Unknown action: " << action << std::endl;
 	}
@@ -269,6 +297,9 @@ void Client::getMobCount()
 }
 
 
+typedef int(__thiscall* Decrypt)(int* addr);
+void* Decrypt_Addr = (void*)0x45E2EB;
+Decrypt CallDecrypt = reinterpret_cast<Decrypt>(Decrypt_Addr);
 void Client::getItemXY()
 {
 	DWORD* item = *(DWORD**)0x9791D0;
@@ -297,13 +328,13 @@ void Client::getItemXY()
 	if (!itemYPtr)
 		return;
 
-	//itemX = CallDecrypt((int*)itemXPtr, 0);
-	//itemY = CallDecrypt((int*)itemYPtr, 0);
+	itemX = CallDecrypt((int*)itemXPtr);
+	itemY = CallDecrypt((int*)itemYPtr);
 
-	////this->variables.item.x = itemX;
-	////this->variables.item.y = itemY;
+	this->variables.item.x = itemX;
+	this->variables.item.y = itemY;
 
-	std::cout << "itemX: "  << "   ItemY: " << std::endl;
+	std::cout << "itemX: "  << itemX << "   ItemY: " << itemY << std::endl;
 }
 
 void Client::getItemCount()

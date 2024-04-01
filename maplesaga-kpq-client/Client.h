@@ -19,6 +19,7 @@ class Client;
 #include "Hacks.h"
 #include "SharedVariables.h"
 
+extern std::atomic<bool> autoAttackOn_callPressButton;
 
 class Client
 {
@@ -42,4 +43,6 @@ public:
 	void getMobCount();
 	void getItemXY();
 	void getItemCount();
+
+	void enableAutoAttack();
 };
