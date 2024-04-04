@@ -156,6 +156,8 @@ int Client::runServer()
 
 int ItemID = 0;
 int ItemCountID = 0;
+bool isAttacking = false;
+bool isLooting = false;
 void Client::determineAction(const std::string& receivedStr)
 {
 	std::istringstream iss(receivedStr);
@@ -209,9 +211,15 @@ void Client::determineAction(const std::string& receivedStr)
 	{
 		if (words.size() == 2) { // Check if there are enough arguments
 			if (words[1] == "True")
+			{
+				if (isAttacking == true)
+					return;
+				isAttacking = true;
 				CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoAttack, nullptr, 0, nullptr);
+			}
 			else
 			{
+				isAttacking = false;
 				autoAttackOn_callPressButton = false;
 				std::cout << "Auto Attack Disabled" << std::endl;
 			}
@@ -222,11 +230,15 @@ void Client::determineAction(const std::string& receivedStr)
 		if (words.size() == 2) { // Check if there are enough arguments
 			if (words[1] == "True")
 			{
+				if (isLooting == true)
+					return;
+				isLooting = true;
 				std::cout << "True Loot..." << std::endl;
 				CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoLoot, nullptr, 0, nullptr);
 			}
 			else
 			{
+				isLooting = false;
 				autoLootOn_callPressButton = false;
 				std::cout << "Auto Loot Disabled" << std::endl;
 			}
@@ -383,6 +395,9 @@ void Client::getItemXY()
 void Client::getItemCount()
 {
 	DWORD* item = *(DWORD**)0x9791D0;
+
+	if (!item)
+		return;
 	this->variables.itemCount = *reinterpret_cast<DWORD*>(reinterpret_cast<char*>(item) + 0x28);
 
 	//std::cout << "ItemCount: " << this->variables.itemCount << std::endl;

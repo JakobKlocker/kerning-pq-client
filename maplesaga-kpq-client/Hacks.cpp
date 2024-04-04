@@ -5,8 +5,17 @@
 TeleportFuncPtr TELEPORTFUNC_TELEPORTPLAYER = (TeleportFuncPtr)0x007F5330;
 void teleportPlayer(DWORD posX, DWORD posY) {
     DWORD* edi = reinterpret_cast<DWORD*>(0x00978358);
-    DWORD* ptr = reinterpret_cast<DWORD*>(*edi + 0xD20);
-    TELEPORTFUNC_TELEPORTPLAYER(*ptr, posX, posY);
+
+    std::cout << "Inside and I gotta shit" << std::endl;
+    DWORD* trigger = reinterpret_cast<DWORD*>(*edi + 0x1E94);
+    DWORD* x = reinterpret_cast<DWORD*>(*edi + 0x1E9C);
+    DWORD* y = reinterpret_cast<DWORD*>(*edi + 0x1EA0);
+
+
+    *x = posX;
+    *y = posY;
+    *trigger = 1;
+    //TELEPORTFUNC_TELEPORTPLAYER(*ptr, posX, posY);
 }
 
 DWORD JMPTO_AUTOROPEENABLE = 0x804761;
@@ -50,7 +59,7 @@ void __declspec(naked) hookHpMp_Assembly() {
         pushad
         pushfd
 
-        cmp client.variables.charMp, 220
+        cmp client.variables.charMp, 300
         ja mpcheck
         mov PAUSEATTACK, 1
         push 0x01510000
@@ -60,7 +69,7 @@ void __declspec(naked) hookHpMp_Assembly() {
 
         mov PAUSEATTACK, 0
         mpcheck:
-        cmp client.variables.charHp, 220
+        cmp client.variables.charHp, 300
         ja done
         //mov ecx, 0x978358
         //mov ecx, [ecx]
