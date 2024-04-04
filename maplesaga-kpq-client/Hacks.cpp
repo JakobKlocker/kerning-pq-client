@@ -52,20 +52,12 @@ void __declspec(naked) hookHpMp_Assembly() {
 
         cmp client.variables.charMp, 220
         ja mpcheck
-        //mov ecx, 0x978358
-        //mov ecx, [ecx]
         mov PAUSEATTACK, 1
         push 0x01510000
         push 0x00000022
         mov TMP_HOOKHPMP, 0x817C0F
         call [TMP_HOOKHPMP]
 
-        //mov ecx, 0x978358
-        //mov ecx, [ecx]
-        //push 0x01510000
-        //push 0x00000022
-        //mov TMP_HOOKHPMP, 0x4E63C1
-        //call[TMP_HOOKHPMP]
         mov PAUSEATTACK, 0
         mpcheck:
         cmp client.variables.charHp, 220
@@ -78,12 +70,6 @@ void __declspec(naked) hookHpMp_Assembly() {
         mov TMP_HOOKHPMP, 0x817C0F
 
         call[TMP_HOOKHPMP]
-        //mov ecx, 0x978358
-        //mov ecx, [ecx]
-        //push 0x01490000
-        //push 0x00000021
-        //mov TMP_HOOKHPMP, 0x4E63C1
-        //call[TMP_HOOKHPMP]
         mov PAUSEATTACK, 0
         done:
         popfd
