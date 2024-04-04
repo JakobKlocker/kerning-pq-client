@@ -286,6 +286,7 @@ void Client::getMapId()
 	this->variables.itemID = ItemID;
 	this->variables.itemCountByID = ItemCountID;
 	this->variables.ticketsNeeded = REQUIREDTICKETS;
+	this->variables.currentTickets = getItemCountByID(4001007);
 }
 
 void Client::getNextMobXY()

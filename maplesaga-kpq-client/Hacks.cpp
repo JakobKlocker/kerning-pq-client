@@ -31,6 +31,7 @@ void __declspec(naked) autoRopeDisable_Assembly()
 
 
 DWORD TMP_HOOKHPMP = 0;
+BOOLEAN PAUSEATTACK = 0;
 DWORD HPHOOKRET_HOOKMPHP= 0x00740CA4;
 void __declspec(naked) hookHpMp_Assembly() {
 
@@ -49,38 +50,41 @@ void __declspec(naked) hookHpMp_Assembly() {
         pushad
         pushfd
 
-        cmp client.variables.charMp, 150
+        cmp client.variables.charMp, 220
         ja mpcheck
-        mov ecx, 0x978358
-        mov ecx, [ecx]
+        //mov ecx, 0x978358
+        //mov ecx, [ecx]
+        mov PAUSEATTACK, 1
         push 0x01510000
         push 0x00000022
-        mov TMP_HOOKHPMP, 0x007A4711
+        mov TMP_HOOKHPMP, 0x817C0F
         call [TMP_HOOKHPMP]
 
-        mov ecx, 0x978358
-        mov ecx, [ecx]
-        push 0x81510000
-        push 0x00000022
-        mov TMP_HOOKHPMP, 0x007A4711
-        call[TMP_HOOKHPMP]
-
+        //mov ecx, 0x978358
+        //mov ecx, [ecx]
+        //push 0x01510000
+        //push 0x00000022
+        //mov TMP_HOOKHPMP, 0x4E63C1
+        //call[TMP_HOOKHPMP]
+        mov PAUSEATTACK, 0
         mpcheck:
-        cmp client.variables.charHp, 150
+        cmp client.variables.charHp, 220
         ja done
-        mov ecx, 0x978358
-        mov ecx, [ecx]
+        //mov ecx, 0x978358
+        //mov ecx, [ecx]
+        mov PAUSEATTACK, 1
         push 0x01490000
         push 0x00000021
-        mov TMP_HOOKHPMP, 0x007A4711
-        call[TMP_HOOKHPMP]
-        mov ecx, 0x978358
-        mov ecx, [ecx]
-        push 0x81490000
-        push 0x00000021
-        mov TMP_HOOKHPMP, 0x007A4711
-        call[TMP_HOOKHPMP]
+        mov TMP_HOOKHPMP, 0x817C0F
 
+        call[TMP_HOOKHPMP]
+        //mov ecx, 0x978358
+        //mov ecx, [ecx]
+        //push 0x01490000
+        //push 0x00000021
+        //mov TMP_HOOKHPMP, 0x4E63C1
+        //call[TMP_HOOKHPMP]
+        mov PAUSEATTACK, 0
         done:
         popfd
         popad
@@ -235,14 +239,16 @@ DWORD GETCHARACTERDATA = 0x458C4F;
 DWORD UNKNOWNCALL = 0x46575E;
 DWORD GETDATA = 0x45E2EB;
 DWORD CharDataPTR = 0x97E4B0;
+unsigned char ZMap[250];
 int getItemIdBySlot(int Tab, int Slot) {
     int itemID = 0;
-    unsigned char* ZMap = static_cast<unsigned char*>(std::malloc(250));
+    ZeroMemory(ZMap, 250);
+    unsigned char* Zmap = ZMap;
     __asm {
         pushad
         push Slot //Slot
         push Tab //Tab Equip(1), Use(2), Set-Up(3), Etc(4), Cash(5)
-        push ZMap
+        push Zmap
         mov ecx, [CharDataPTR]
         mov ecx, [ecx]
         cmp ecx, 0
@@ -253,7 +259,7 @@ int getItemIdBySlot(int Tab, int Slot) {
         mov esi, [eax + 4]
         cmp esi, 0
         je done
-        mov ecx, ZMap
+        mov ecx, Zmap
         call UNKNOWNCALL
 
         lea edi, [esi + 0xC]
@@ -264,7 +270,6 @@ int getItemIdBySlot(int Tab, int Slot) {
         done:
         popad
     }
-    std::free(ZMap);
     return itemID;
 }
 
@@ -279,6 +284,13 @@ int getItemCountByID(DWORD ItemID)
         mov[itemCount], eax
     }
     return itemCount;
+}
+
+DWORD JMPTOAIRBYPASS = 0x07AB3A9;
+void __declspec(naked) airCheckMagicClaw_Assembly() {
+    __asm {
+        jmp JMPTOAIRBYPASS
+    }
 }
 
 void sendPacket(std::string& packetStr)
@@ -317,19 +329,19 @@ void callSendPacket(BYTE packet[], int size)
     SEND_CALLSENDPACKET(*CLIENTSOCKET_CALLSENDPACKET, &Packet);
 }
 
-PressKey PRESSKEY_CALLPRESSBUTTON = (PressKey)0x7A4711;
+PressKey PRESSKEY_CALLPRESSBUTTON = (PressKey)0x817C0F;
 std::atomic<bool> autoAttackOn_callPressButton(false);
 void callAutoAttack()
 {
-    DWORD* thisCallPress = *(DWORD**)0x978358;
-    int arg1 = 0x1D0030;
-    int arg2 = 0x00000011;
+    int arg1 = 0x11;
+    int arg2 = 0x1D0030;
 
     autoAttackOn_callPressButton = true;
 
     while (autoAttackOn_callPressButton)
     {
-        PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
+        if(!PAUSEATTACK)
+            PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
         Sleep(50);
     }
     ExitThread(1);
@@ -339,15 +351,15 @@ std::atomic<bool> autoLootOn_callPressButton(false);
 void callAutoLoot()
 {
     std::cout << "Inside AUto Loot" << std::endl;
-    DWORD* thisCallPress = *(DWORD**)0x978358;
-    int arg1 = 0x0000005A;
+    int arg1 = 0x5A;
     int arg2 = 0x2C0000;
 
     autoLootOn_callPressButton = true;
 
     while (autoLootOn_callPressButton)
     {
-        PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
+        if(!PAUSEATTACK)
+            PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
         Sleep(50);
     }
     ExitThread(1);
@@ -356,11 +368,10 @@ void callAutoLoot()
 void callEnterPortal()
 {
     std::cout << "Inside Use Portal" << std::endl;
-    DWORD* thisCallPress = *(DWORD**)0x978358;
-    int arg1 = 0x00000026;
+    int arg1 = 0x26;
     int arg2 = 0x1480000;
 
-    PRESSKEY_CALLPRESSBUTTON(thisCallPress, arg1, arg2);
+    PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
 }
 
 
