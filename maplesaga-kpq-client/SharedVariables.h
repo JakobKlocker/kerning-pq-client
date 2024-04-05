@@ -23,4 +23,5 @@ struct SharedVariables {
 	DWORD itemID;
 	DWORD itemCountByID;
 	bool isPartyLeader;
+	DWORD stageCleared;
 };
