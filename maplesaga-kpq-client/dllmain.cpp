@@ -28,7 +28,7 @@ int mainThread()
     detour((char*)0x04754C1, hookRecv_Assembly, 5);
     detour((char*)0x641940, autoNpc_Assembly, 5);
     detour((char*)0x6417FF, autoNpcSecond_Assembly, 5);
-    detour((char*)0x7AB386, airCheckMagicClaw_Assembly, 9);
+    detour((char*)0x7AB37E, airCheckMagicClaw_Assembly, 6);
 
 
     std::thread mainThread(&Client::UpdateAllVariablesLoop, client);

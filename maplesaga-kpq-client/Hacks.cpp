@@ -6,16 +6,16 @@ TeleportFuncPtr TELEPORTFUNC_TELEPORTPLAYER = (TeleportFuncPtr)0x007F5330;
 void teleportPlayer(DWORD posX, DWORD posY) {
 	DWORD* edi = reinterpret_cast<DWORD*>(0x00978358);
 
-	std::cout << "Inside and I gotta shit" << std::endl;
-	DWORD* trigger = reinterpret_cast<DWORD*>(*edi + 0x1E94);
-	DWORD* x = reinterpret_cast<DWORD*>(*edi + 0x1E9C);
-	DWORD* y = reinterpret_cast<DWORD*>(*edi + 0x1EA0);
+	if (edi) {
+		DWORD* trigger = reinterpret_cast<DWORD*>(*edi + 0x1E94);
+		DWORD* x = reinterpret_cast<DWORD*>(*edi + 0x1E9C);
+		DWORD* y = reinterpret_cast<DWORD*>(*edi + 0x1EA0);
 
 
-	*x = posX;
-	*y = posY;
-	*trigger = 1;
-	//TELEPORTFUNC_TELEPORTPLAYER(*ptr, posX, posY);
+		*x = posX;
+		*y = posY;
+		*trigger = 1;
+	}
 }
 
 DWORD JMPTO_AUTOROPEENABLE = 0x804761;
@@ -37,13 +37,44 @@ void __declspec(naked) autoRopeDisable_Assembly()
 		jmp JMPTO1_AUTOROPEDISABLE
 	}
 }
+PressTest PRESSKEY_CALLPRESSBUTTON = (PressTest)0x00818D3E;
 
+void PressButton(DWORD key) {
+	DWORD* base = *(DWORD**)0x00978364;
+	DWORD* CInputSystem = (DWORD*)0x9784C0;
+	if (base) {
+
+		DWORD message = 0x100;
+
+		unsigned int SpecialKeyFlag = ((int(__thiscall*)(DWORD*))0x527587)(CInputSystem);
+
+		int result[2];
+
+		int lParam = MapVirtualKey(key, 0) << 16;
+
+		lParam = 0 | lParam & 0x1FF0000 | SpecialKeyFlag;
+
+		PRESSKEY_CALLPRESSBUTTON(base, message, key, lParam);
+	}
+}
+
+void callEnterHeal()
+{
+	Sleep(50);
+	PressButton(0x21);
+}
+
+void callEnterMana()
+{
+	Sleep(50);
+	PressButton(0x22);
+}
 
 DWORD TMP_HOOKHPMP = 0;
 BOOLEAN PAUSEATTACK = 0;
 DWORD HPHOOKRET_HOOKMPHP = 0x00740CA4;
 DWORD* randomMem = (DWORD*)malloc(3000);
-DWORD* ebpSafe = 0;
+
 void __declspec(naked) hookHpMp_Assembly() {
 
 	__asm {
@@ -63,31 +94,37 @@ void __declspec(naked) hookHpMp_Assembly() {
 		cmp client.variables.charMp, 300
 		ja mpcheck
 		mov PAUSEATTACK, 1
-		mov esi, 0x978364
-		mov esi, [esi]
-		mov ecx, esi
-		mov ebp, randomMem
-		push 0x100
-		push 0x1510000
-		push 0x11
-		push 0x100
-		mov TMP_HOOKHPMP, 0x818D3E
-		call[TMP_HOOKHPMP]
+		}
+		callEnterMana();
+		__asm {
+		//mov esi, 0x978364
+		//mov esi, [esi]
+		//mov ecx, esi
+		//mov ebp, randomMem
+		//push 0x100
+		//push 0x1510000
+		//push 0x11
+		//push 0x100
+		//mov TMP_HOOKHPMP, 0x818D3E
+		//call[TMP_HOOKHPMP]
 		mov PAUSEATTACK, 0
 		mpcheck:
 		cmp client.variables.charHp, 300
 		ja done
 		mov PAUSEATTACK, 1
-		mov esi, 0x978364
-		mov esi, [esi]
-		mov ecx, esi
-		mov ebp, randomMem
-		push 0x100
-		push 0x01490000
-		push 0x11
-		push 0x100
-		mov TMP_HOOKHPMP, 0x818D3E
-		call[TMP_HOOKHPMP]
+		}
+		callEnterHeal();
+		__asm {
+		//mov esi, 0x978364
+		//mov esi, [esi]
+		//mov ecx, esi
+		//mov ebp, randomMem
+		//push 0x100
+		//push 0x01490000
+		//push 0x11
+		//push 0x100
+		//mov TMP_HOOKHPMP, 0x818D3E
+		//call[TMP_HOOKHPMP]
 		mov PAUSEATTACK, 0
 		done:
 		popfd
@@ -203,17 +240,17 @@ void __declspec(naked) hookRecv_Assembly()
 		je xorit
 		Process :
 		pop eax
-			pop ecx
-			call DECODE1_HOOKRECV
-			jmp noxor
-			xorit :
+		pop ecx
+		call DECODE1_HOOKRECV
+		jmp noxor
+		xorit :
 		pop eax
-			pop ecx
-			call DECODE1_HOOKRECV
-			xor eax, eax
-			noxor :
+		pop ecx
+		call DECODE1_HOOKRECV
+		xor eax, eax
+		noxor :
 		pushfd
-			pushad
+		pushad
 	}
 	setCouponsNeeded();
 	__asm {
@@ -296,9 +333,10 @@ int getItemCountByID(DWORD ItemID)
 	return itemCount;
 }
 
-DWORD JMPTOAIRBYPASS = 0x07AB3A9;
+DWORD JMPTOAIRBYPASS = 0x07AB383;
 void __declspec(naked) airCheckMagicClaw_Assembly() {
 	__asm {
+		mov eax, 00000001
 		jmp JMPTOAIRBYPASS
 	}
 }
@@ -339,12 +377,10 @@ void callSendPacket(BYTE packet[], int size)
 	SEND_CALLSENDPACKET(*CLIENTSOCKET_CALLSENDPACKET, &Packet);
 }
 
-PressTest PRESSKEY_CALLPRESSBUTTON = (PressTest)0x00818D3E;
+
 std::atomic<bool> autoAttackOn_callPressButton(false);
 void callAutoAttack()
 {
-	DWORD* base = *(DWORD**)0x00978364;
-	DWORD* randomMem = (DWORD*)malloc(3000);
 	DWORD keyButton = 0x1D0030;
 
 	autoAttackOn_callPressButton = true;
@@ -354,10 +390,10 @@ void callAutoAttack()
 		if (PAUSEATTACK)
 			Sleep(150);
 		if (!PAUSEATTACK)
-			PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
-		Sleep(50);
+			PressButton(0x11);
+		//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
+		Sleep(200);
 	}
-	free(randomMem);
 	ExitThread(1);
 }
 
@@ -365,8 +401,6 @@ void callAutoAttack()
 std::atomic<bool> autoLootOn_callPressButton(false);
 void callAutoLoot()
 {
-	DWORD* base = *(DWORD**)0x00978364;
-	DWORD* randomMem = (DWORD*)malloc(3000);
 	DWORD keyButton = 0x2C0000;
 
 	autoLootOn_callPressButton = true;
@@ -376,20 +410,21 @@ void callAutoLoot()
 		if (PAUSEATTACK)
 			Sleep(150);
 		if (!PAUSEATTACK)
-			PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
-		Sleep(50);
+			PressButton(0x5A);
+		//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
+		Sleep(200);
 	}
-	free(randomMem);
 	ExitThread(1);
 }
 
 void callEnterPortal()
 {
-	DWORD* base = *(DWORD**)0x00978364;
-	DWORD* randomMem = (DWORD*)malloc(3000);
+	//DWORD* base = *(DWORD**)0x00978364;
+	//DWORD* randomMem = (DWORD*)malloc(3000);
 	DWORD keyButton = 0x1480000;
+	PressButton(0x26);
 	STAGECLEARED = 0;
-	PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
+	//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
 }
 
 

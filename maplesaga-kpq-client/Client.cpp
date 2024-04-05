@@ -295,7 +295,16 @@ void Client::getMapId()
 	mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
 	this->variables.mapId = *mapId;
 	this->variables.TCPPort = PORT;
-	this->variables.itemID = ItemID;
+	if (this->variables.mapId == 103000800 || this->variables.mapId == 103000804) {
+		this->variables.itemID = ItemID;
+	}
+	else if (this->variables.itemID == 4001008) {
+		ItemID = 0;
+		this->variables.itemID = 0;
+	}
+	else {
+		this->variables.itemID = ItemID;
+	}
 	this->variables.itemCountByID = ItemCountID;
 	this->variables.ticketsNeeded = REQUIREDTICKETS;
 	this->variables.stageCleared = STAGECLEARED;
