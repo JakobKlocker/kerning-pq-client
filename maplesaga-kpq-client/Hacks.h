@@ -41,6 +41,9 @@ typedef int(__stdcall* TeleportFuncPtr)(int, DWORD, DWORD);
 
 typedef void(__stdcall* PressKey)(int, int);
 
+typedef void(__thiscall* PressTest)(DWORD* base, DWORD* randomMem, DWORD oneHundred, DWORD keyButton, DWORD oneHundredTwo);
+
+
 extern DWORD REQUIREDTICKETS;
 extern DWORD STAGECLEARED;
 #endif

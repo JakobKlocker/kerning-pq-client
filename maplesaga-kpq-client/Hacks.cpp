@@ -42,6 +42,8 @@ void __declspec(naked) autoRopeDisable_Assembly()
 DWORD TMP_HOOKHPMP = 0;
 BOOLEAN PAUSEATTACK = 0;
 DWORD HPHOOKRET_HOOKMPHP = 0x00740CA4;
+DWORD* randomMem = (DWORD*)malloc(3000);
+DWORD* ebpSafe = 0;
 void __declspec(naked) hookHpMp_Assembly() {
 
 	__asm {
@@ -55,26 +57,36 @@ void __declspec(naked) hookHpMp_Assembly() {
 		mov TMP_HOOKHPMP, 0x745827
 		call[TMP_HOOKHPMP]
 		test eax, eax
-
 		pushad
 		pushfd
 
 		cmp client.variables.charMp, 300
 		ja mpcheck
 		mov PAUSEATTACK, 1
-		push 0x01510000
-		push 0x00000022
-		mov TMP_HOOKHPMP, 0x817C0F
+		mov esi, 0x978364
+		mov esi, [esi]
+		mov ecx, esi
+		mov ebp, randomMem
+		push 0x100
+		push 0x1510000
+		push 0x11
+		push 0x100
+		mov TMP_HOOKHPMP, 0x818D3E
 		call[TMP_HOOKHPMP]
 		mov PAUSEATTACK, 0
 		mpcheck:
 		cmp client.variables.charHp, 300
 		ja done
 		mov PAUSEATTACK, 1
+		mov esi, 0x978364
+		mov esi, [esi]
+		mov ecx, esi
+		mov ebp, randomMem
+		push 0x100
 		push 0x01490000
-		push 0x00000021
-		mov TMP_HOOKHPMP, 0x817C0F
-
+		push 0x11
+		push 0x100
+		mov TMP_HOOKHPMP, 0x818D3E
 		call[TMP_HOOKHPMP]
 		mov PAUSEATTACK, 0
 		done:
@@ -327,12 +339,13 @@ void callSendPacket(BYTE packet[], int size)
 	SEND_CALLSENDPACKET(*CLIENTSOCKET_CALLSENDPACKET, &Packet);
 }
 
-PressKey PRESSKEY_CALLPRESSBUTTON = (PressKey)0x817C0F;
+PressTest PRESSKEY_CALLPRESSBUTTON = (PressTest)0x00818D3E;
 std::atomic<bool> autoAttackOn_callPressButton(false);
 void callAutoAttack()
 {
-	int arg1 = 0x11;
-	int arg2 = 0x1D0030;
+	DWORD* base = *(DWORD**)0x00978364;
+	DWORD* randomMem = (DWORD*)malloc(3000);
+	DWORD keyButton = 0x1D0030;
 
 	autoAttackOn_callPressButton = true;
 
@@ -341,18 +354,20 @@ void callAutoAttack()
 		if (PAUSEATTACK)
 			Sleep(150);
 		if (!PAUSEATTACK)
-			PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
+			PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
 		Sleep(50);
 	}
+	free(randomMem);
 	ExitThread(1);
 }
+
 
 std::atomic<bool> autoLootOn_callPressButton(false);
 void callAutoLoot()
 {
-	std::cout << "Inside AUto Loot" << std::endl;
-	int arg1 = 0x5A;
-	int arg2 = 0x2C0000;
+	DWORD* base = *(DWORD**)0x00978364;
+	DWORD* randomMem = (DWORD*)malloc(3000);
+	DWORD keyButton = 0x2C0000;
 
 	autoLootOn_callPressButton = true;
 
@@ -361,19 +376,20 @@ void callAutoLoot()
 		if (PAUSEATTACK)
 			Sleep(150);
 		if (!PAUSEATTACK)
-			PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
+			PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
 		Sleep(50);
 	}
+	free(randomMem);
 	ExitThread(1);
 }
 
 void callEnterPortal()
 {
-	std::cout << "Inside Use Portal" << std::endl;
-	int arg1 = 0x26;
-	int arg2 = 0x1480000;
+	DWORD* base = *(DWORD**)0x00978364;
+	DWORD* randomMem = (DWORD*)malloc(3000);
+	DWORD keyButton = 0x1480000;
 	STAGECLEARED = 0;
-	PRESSKEY_CALLPRESSBUTTON(arg1, arg2);
+	PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
 }
 
 
