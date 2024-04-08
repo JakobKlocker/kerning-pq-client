@@ -60,3 +60,5 @@ CMakeFiles/
 *.log
 *.tlog
 *.recipe
+/maplesaga-kpq-client/Release/maplesaga-kpq-client.ipdb
+/maplesaga-kpq-client/Release/maplesaga-kpq-client.iobj
