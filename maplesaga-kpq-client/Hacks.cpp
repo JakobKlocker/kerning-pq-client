@@ -42,39 +42,37 @@ PressTest PRESSKEY_CALLPRESSBUTTON = (PressTest)0x00818D3E;
 void PressButton(DWORD key) {
 	DWORD* base = *(DWORD**)0x00978364;
 	DWORD* CInputSystem = (DWORD*)0x9784C0;
-	if (base) {
+	DWORD* CInputCall = (DWORD*)0x527587;
+	if (base && CInputCall && CInputCall) {
 
 		DWORD message = 0x100;
-
 		unsigned int SpecialKeyFlag = ((int(__thiscall*)(DWORD*))0x527587)(CInputSystem);
-
-		int result[2];
 
 		int lParam = MapVirtualKey(key, 0) << 16;
 
 		lParam = 0 | lParam & 0x1FF0000 | SpecialKeyFlag;
-
+		if (key == 0x2D)
+			lParam = (lParam + 0x1000000);
 		PRESSKEY_CALLPRESSBUTTON(base, message, key, lParam);
 	}
 }
 
+BOOLEAN PAUSEATTACKHP = 0;
+BOOLEAN PAUSEATTACKMP = 0;
 void callEnterHeal()
 {
-	Sleep(50);
 	PressButton(0x21);
+	PAUSEATTACKHP = 0;
 }
 
 void callEnterMana()
 {
-	Sleep(50);
 	PressButton(0x22);
+	PAUSEATTACKMP = 0;
 }
 
 DWORD TMP_HOOKHPMP = 0;
-BOOLEAN PAUSEATTACK = 0;
 DWORD HPHOOKRET_HOOKMPHP = 0x00740CA4;
-DWORD* randomMem = (DWORD*)malloc(3000);
-
 void __declspec(naked) hookHpMp_Assembly() {
 
 	__asm {
@@ -93,10 +91,9 @@ void __declspec(naked) hookHpMp_Assembly() {
 
 		cmp client.variables.charMp, 300
 		ja mpcheck
-		mov PAUSEATTACK, 1
-		}
-		callEnterMana();
-		__asm {
+	}
+	PAUSEATTACKMP = 1;
+	__asm {
 		//mov esi, 0x978364
 		//mov esi, [esi]
 		//mov ecx, esi
@@ -107,14 +104,12 @@ void __declspec(naked) hookHpMp_Assembly() {
 		//push 0x100
 		//mov TMP_HOOKHPMP, 0x818D3E
 		//call[TMP_HOOKHPMP]
-		mov PAUSEATTACK, 0
 		mpcheck:
 		cmp client.variables.charHp, 300
-		ja done
-		mov PAUSEATTACK, 1
-		}
-		callEnterHeal();
-		__asm {
+			ja done
+	}
+	PAUSEATTACKHP = 1;
+	__asm {
 		//mov esi, 0x978364
 		//mov esi, [esi]
 		//mov ecx, esi
@@ -125,12 +120,11 @@ void __declspec(naked) hookHpMp_Assembly() {
 		//push 0x100
 		//mov TMP_HOOKHPMP, 0x818D3E
 		//call[TMP_HOOKHPMP]
-		mov PAUSEATTACK, 0
 		done:
 		popfd
-		popad
+			popad
 
-		jmp[HPHOOKRET_HOOKMPHP]
+			jmp[HPHOOKRET_HOOKMPHP]
 	}
 }
 
@@ -173,7 +167,9 @@ void setCouponsNeeded()
 {
 	const unsigned char expectedHeader[] = { 0xED, 0x00 };
 	const unsigned char stageSuccessPacket[] = { 0x68, 0x00, 0x03, 0x11, 0x00, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2F, 0x70, 0x61, 0x72, 0x74, 0x79, 0x2F, 0x63, 0x6C, 0x65, 0x61, 0x72 };
-	const unsigned char mapTransferHeader[] = { 0x1E, 0x00};
+	const unsigned char mapTransferHeader[] = { 0x1E, 0x00 };
+	const unsigned char characterData[] = { 0x0B, 0x00 };
+	const unsigned char channelSelect[] = { 0x0A, 0x00, 0xFF };
 	const size_t headerSize = sizeof(expectedHeader);
 	std::string str;
 	if (std::memcmp(RECVHOOKPRT_HOOKRECV, stageSuccessPacket, sizeof(stageSuccessPacket)) == 0) {
@@ -194,7 +190,7 @@ void setCouponsNeeded()
 		int amount = checkCouponAmount(str);
 		if (amount)
 		{
-			std::cout << "Tickets Requiered: " << amount << std::endl;
+			//std::cout << "Tickets Requiered: " << amount << std::endl;
 			REQUIREDTICKETS = amount;
 		}
 	}
@@ -240,17 +236,17 @@ void __declspec(naked) hookRecv_Assembly()
 		je xorit
 		Process :
 		pop eax
-		pop ecx
-		call DECODE1_HOOKRECV
-		jmp noxor
-		xorit :
+			pop ecx
+			call DECODE1_HOOKRECV
+			jmp noxor
+			xorit :
 		pop eax
-		pop ecx
-		call DECODE1_HOOKRECV
-		xor eax, eax
-		noxor :
+			pop ecx
+			call DECODE1_HOOKRECV
+			xor eax, eax
+			noxor :
 		pushfd
-		pushad
+			pushad
 	}
 	setCouponsNeeded();
 	__asm {
@@ -345,7 +341,7 @@ void sendPacket(std::string& packetStr)
 {
 	std::vector<unsigned char> bytes = hexStringToBytes(packetStr);
 	unsigned char* packet = bytes.data();
-	std::cout << "Sendpacket called with: " << packetStr << std::endl;
+	//std::cout << "Sendpacket called with: " << packetStr << std::endl;
 	callSendPacket(packet, bytes.size());
 }
 
@@ -387,12 +383,42 @@ void callAutoAttack()
 
 	while (autoAttackOn_callPressButton)
 	{
-		if (PAUSEATTACK)
-			Sleep(150);
-		if (!PAUSEATTACK)
-			PressButton(0x11);
+		DWORD* mapId = *(DWORD**)0x979268;
+		if (mapId) {
+			mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
+			if (PAUSEATTACKHP) {
+				callEnterHeal();
+				Sleep(300);
+			}
+			if (PAUSEATTACKMP) {
+				callEnterMana();
+				Sleep(300);
+			}
+			if (!PAUSEATTACKHP && !PAUSEATTACKMP)
+			{
+				if (*mapId == 103000804)
+					PressButton(0x2D);
+				else
+					PressButton(0x11);
+			}
+		}
+		else
+		{
+			if (PAUSEATTACKHP) {
+				callEnterHeal();
+				Sleep(300);
+			}
+			if (PAUSEATTACKMP) {
+				callEnterMana();
+				Sleep(300);
+			}
+			if (!PAUSEATTACKHP && !PAUSEATTACKMP)
+			{
+				PressButton(0x11);
+			}
+		}
 		//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
-		Sleep(200);
+		Sleep(300);
 	}
 	ExitThread(1);
 }
@@ -407,14 +433,31 @@ void callAutoLoot()
 
 	while (autoLootOn_callPressButton)
 	{
-		if (PAUSEATTACK)
-			Sleep(150);
-		if (!PAUSEATTACK)
+		if (PAUSEATTACKHP) {
+			callEnterHeal();
+			Sleep(300);
+		}
+		if (PAUSEATTACKMP) {
+			callEnterMana();
+			Sleep(300);
+		}
+		if (!PAUSEATTACKHP && !PAUSEATTACKMP)
 			PressButton(0x5A);
 		//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
-		Sleep(200);
+		Sleep(300);
 	}
 	ExitThread(1);
+}
+
+DWORD CallChannelSelect = 0x566401;
+void SelectChannelLogin(DWORD Channel) {
+	__asm {
+		mov ecx, [0x9796D4]
+		mov ecx, [ecx]
+		push Channel
+		push 0x0
+		call CallChannelSelect
+	}
 }
 
 void callEnterPortal()
@@ -422,8 +465,10 @@ void callEnterPortal()
 	//DWORD* base = *(DWORD**)0x00978364;
 	//DWORD* randomMem = (DWORD*)malloc(3000);
 	DWORD keyButton = 0x1480000;
+	Sleep(150);
 	PressButton(0x26);
 	STAGECLEARED = 0;
+	Sleep(150);
 	//PRESSKEY_CALLPRESSBUTTON(base, randomMem, 0x100, keyButton, 0x100);
 }
 

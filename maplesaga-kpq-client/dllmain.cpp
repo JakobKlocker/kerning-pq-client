@@ -3,7 +3,6 @@
 #include "dllmain.h"
 
 Client client;
-
 void passStuff(char* buffer, int len)
 {
     std::cout << "Bytes in memory:" << std::endl;
@@ -16,12 +15,12 @@ void passStuff(char* buffer, int len)
 int mainThread() 
 {
     //Create Console
-    AllocConsole();
-    FILE* f;
-    freopen_s(&f, "CONOUT$", "w+", stdout);
-    freopen_s(&f, "CONIN$", "r", stdin);
+    //AllocConsole();
+    //FILE* f;
+    //freopen_s(&f, "CONOUT$", "w+", stdout);
+    //freopen_s(&f, "CONIN$", "r", stdin);
 
-    std::cout << "Test" << std::endl;
+    //std::cout << "Test" << std::endl;
 
     detour((char*)0x740C95, hookHpMp_Assembly, 5);
     //detour((char*)0x4751B2, hookSend_Assembly, 5);

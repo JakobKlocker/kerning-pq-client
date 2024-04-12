@@ -17,7 +17,7 @@ void sendPacket_Assembly(unsigned char* &packet, int len, BYTE*& CoutPacket);
 void autoRopeDisable_Assembly();
 void autoRopeEnable_Assembly();
 void airCheckMagicClaw_Assembly();
-
+void SelectChannelLogin(DWORD Channel);
 void sendPacket(std::string& packetStr);
 void detour(void* src, void* dest, int len);
 void callSendPacket(BYTE packet[], int size);

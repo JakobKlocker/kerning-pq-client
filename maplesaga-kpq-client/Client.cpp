@@ -58,6 +58,8 @@ int Client::createMappingHandle()
 int PORT = 1337;
 int Client::runServer()
 {
+	Sleep(5000);
+	startSocket:
 	WSADATA wsaData;
 	SOCKET ListenSocket = INVALID_SOCKET;
 	SOCKET clientsock = INVALID_SOCKET;
@@ -67,13 +69,13 @@ int Client::runServer()
 	int iResult;
 	char recvbuf[500];
 
-	std::cout << "running server..." << std::endl;
+	//std::cout << "running server..." << std::endl;
 
 
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
+		//printf("WSAStartup failed with error: %d\n", iResult);
 		return -1;
 	}
 
@@ -86,11 +88,15 @@ int Client::runServer()
 	restartSocket:
 	do {
 		iResult = getaddrinfo(NULL, std::to_string(PORT).c_str(), &hints, &result);
-		std::cout << "trying port: " << PORT << " iResult:" << iResult << std::endl;
+		//std::cout << "trying port: " << PORT << " iResult:" << iResult << std::endl;
 		PORT++;
 
 		if (iResult != 0) {
-			printf("getaddrinfo failed with error: %d\n", iResult);
+			//printf("getaddrinfo failed with error: %d\n", iResult);
+			if (iResult == 10093) {
+				PORT--;
+				goto startSocket;
+			}
 			WSACleanup();
 			return -1;
 		}
@@ -98,7 +104,7 @@ int Client::runServer()
 		// Create a SOCKET for the server to listen for client connections.
 		ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 		if (ListenSocket == INVALID_SOCKET) {
-			printf("socket failed with error: %ld\n", WSAGetLastError());
+			//printf("socket failed with error: %ld\n", WSAGetLastError());
 			freeaddrinfo(result);
 			WSACleanup();
 			return -1;
@@ -107,19 +113,19 @@ int Client::runServer()
 		// Setup the TCP listening socket
 		iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
-			printf("bind failed with error: %d\n", WSAGetLastError());
+			//printf("bind failed with error: %d\n", WSAGetLastError());
 			freeaddrinfo(result);
 			closesocket(ListenSocket);
 			WSACleanup();
 		}
-	} while (iResult != 0 && PORT <= 1337 + 2);
+	} while (iResult != 0 && PORT <= 1337 + 3);
 	PORT--;
 
 	freeaddrinfo(result);
 
 	iResult = listen(ListenSocket, SOMAXCONN);
 	if (iResult == SOCKET_ERROR) {
-		printf("listen failed with error: %d\n", WSAGetLastError());
+		//printf("listen failed with error: %d\n", WSAGetLastError());
 		closesocket(ListenSocket);
 		WSACleanup();
 		return -1;
@@ -128,13 +134,13 @@ int Client::runServer()
 	// Accept a client socket
 	clientsock = accept(ListenSocket, NULL, NULL);
 	if (clientsock == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
+		//printf("accept failed with error: %d\n", WSAGetLastError());
 		closesocket(ListenSocket);
 		WSACleanup();
 		return 1;
 	}
 
-	std::cout << "Client connected to Server\n";
+	//std::cout << "Client connected to Server\n";
 
 	// No longer need server socket
 	closesocket(ListenSocket);
@@ -144,12 +150,12 @@ int Client::runServer()
 		if (iResult != 0 && iResult < 4096 && iResult > 0)
 		{
 			recvbuf[iResult] = '\0';
-			std::cout << "Received: " << recvbuf << std::endl;
+			//std::cout << "Received: " << recvbuf << std::endl;
 			determineAction(recvbuf);
 		}
 		Sleep(5);
 	} while (iResult != 0 && iResult != 0xffffffff); // If Connection lost iResult = 0xffffffff
-	std::cout << "Connection to Client lost.\n";
+	//std::cout << "Connection to Client lost.\n";
 	goto restartSocket;
 	return (0);
 }
@@ -167,7 +173,7 @@ void Client::determineAction(const std::string& receivedStr)
 	};
 
 	if (words.empty()) {
-		std::cerr << "Received empty string.\n";
+		//std::cerr << "Received empty string.\n";
 		return;
 	}
 
@@ -182,7 +188,7 @@ void Client::determineAction(const std::string& receivedStr)
 			sendPacket(restOfTheString);
 		}
 		else {
-			std::cerr << "Incomplete sendpacket command.\n";
+			//std::cerr << "Incomplete sendpacket command.\n";
 		}
 	}
 	else if (action == "teleport") {
@@ -192,7 +198,7 @@ void Client::determineAction(const std::string& receivedStr)
 			teleportPlayer(x, y);
 		}
 		else {
-			std::cerr << "Incomplete teleport command.\n";
+			//std::cerr << "Incomplete teleport command.\n";
 		}
 	}
 	else if (action == "rope") {
@@ -204,7 +210,7 @@ void Client::determineAction(const std::string& receivedStr)
 				detour((char*)0x80474C, autoRopeDisable_Assembly, 6);
 		}
 		else {
-			std::cerr << "Incomplete rope command.\n";
+			//std::cerr << "Incomplete rope command.\n";
 		}
 	}
 	else if (action == "attack")
@@ -221,7 +227,7 @@ void Client::determineAction(const std::string& receivedStr)
 			{
 				isAttacking = false;
 				autoAttackOn_callPressButton = false;
-				std::cout << "Auto Attack Disabled" << std::endl;
+				//std::cout << "Auto Attack Disabled" << std::endl;
 			}
 		}
 	}
@@ -233,14 +239,14 @@ void Client::determineAction(const std::string& receivedStr)
 				if (isLooting == true)
 					return;
 				isLooting = true;
-				std::cout << "True Loot..." << std::endl;
+				//std::cout << "True Loot..." << std::endl;
 				CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)callAutoLoot, nullptr, 0, nullptr);
 			}
 			else
 			{
 				isLooting = false;
 				autoLootOn_callPressButton = false;
-				std::cout << "Auto Loot Disabled" << std::endl;
+				//std::cout << "Auto Loot Disabled" << std::endl;
 			}
 		}
 	}
@@ -258,12 +264,19 @@ void Client::determineAction(const std::string& receivedStr)
 			ItemCountID = getItemCountByID(itemID);
 		}
 	}
+	else if (action == "channel") {
+		if (words.size() == 2) { // Check if there are enough arguments
+			DWORD Channel;
+			std::istringstream(words[1]) >> Channel;
+			SelectChannelLogin(Channel);
+		}
+	}
 	else if (action == "portal")
 	{
 		callEnterPortal();
 	}
 	else {
-		std::cerr << "Unknown action: " << action << std::endl;
+		//std::cerr << "Unknown action: " << action << std::endl;
 	}
 }
 
@@ -280,7 +293,7 @@ void Client::mapVariableStructure()
 
 	if (pBuf == NULL)
 	{
-		std::cout << "Unable to map file" << std::endl;
+		//std::cout << "Unable to map file" << std::endl;
 		return;
 	}
 
@@ -294,7 +307,6 @@ void Client::getMapId()
 	DWORD* mapId = *(DWORD**)0x979268;
 	mapId = reinterpret_cast<DWORD*>(reinterpret_cast<char*>(mapId) + 0x62C);
 	this->variables.mapId = *mapId;
-	this->variables.TCPPort = PORT;
 	if (this->variables.mapId == 103000800 || this->variables.mapId == 103000804) {
 		this->variables.itemID = ItemID;
 	}
@@ -412,17 +424,43 @@ void Client::getItemCount()
 
 	//std::cout << "ItemCount: " << this->variables.itemCount << std::endl;
 }
-
+bool firstRun = true;
 void Client::UpdateAllVariablesLoop()
 {
 	while (1)
 	{
-		getMapId();
-		getNextMobXY();
-		getItemXY();
-		getItemCount();
-		getPlayerXY();
-		getMobCount();
+		DWORD* ingamePTR = *(DWORD**)0x979268;
+		if (firstRun) {
+			DWORD* loginScreen = *(DWORD**)0x979430;
+			DWORD* channelSelect = *(DWORD**)0x97942C;
+			DWORD* characterSelect = *(DWORD**)0x979424;
+			if (loginScreen && !channelSelect) {
+				this->variables.loginScreen = 1;
+			}
+			if (channelSelect && !characterSelect) {
+				this->variables.channelSelect = 1;
+			}
+			if (characterSelect && !ingamePTR) {
+				this->variables.characterSelect = 1;
+			}
+		}
+
+		if (ingamePTR) {
+			if (firstRun) {
+				firstRun = false;
+				Sleep(1000);
+			}
+			this->variables.loginScreen = 0;
+			this->variables.channelSelect = 0;
+			this->variables.characterSelect = 0;
+			getMapId();
+			getNextMobXY();
+			getItemXY();
+			getItemCount();
+			getPlayerXY();
+			getMobCount();
+		}
+		this->variables.TCPPort = PORT;
 		this->mapVariableStructure();
 		Sleep(50);
 	}
