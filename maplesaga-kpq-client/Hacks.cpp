@@ -39,6 +39,8 @@ void __declspec(naked) autoRopeDisable_Assembly()
 }
 PressTest PRESSKEY_CALLPRESSBUTTON = (PressTest)0x00818D3E;
 
+extern HWND hCurWndCorrect;
+
 void PressButton(DWORD key) {
 	DWORD* base = *(DWORD**)0x00978364;
 	DWORD* CInputSystem = (DWORD*)0x9784C0;
@@ -53,7 +55,11 @@ void PressButton(DWORD key) {
 		lParam = 0 | lParam & 0x1FF0000 | SpecialKeyFlag;
 		if (key == 0x2D)
 			lParam = (lParam + 0x1000000);
-		PRESSKEY_CALLPRESSBUTTON(base, message, key, lParam);
+
+		if(key == 0x26)
+			PRESSKEY_CALLPRESSBUTTON(base, message, key, lParam);
+		else
+			PostMessageA(hCurWndCorrect, WM_KEYDOWN, 0, lParam);
 	}
 }
 

@@ -2,6 +2,26 @@
 #include "pch.h"
 #include "dllmain.h"
 
+HWND hCurWnd = NULL;
+HWND hCurWndCorrect = NULL;
+
+void GetAllWindowsFromProcessID(DWORD dwProcessID)
+{
+    // find all hWnds (vhWnds) associated with a process id (dwProcessID)
+    
+    do
+    {
+        hCurWnd = FindWindowEx(NULL, hCurWnd, NULL, NULL);
+        DWORD dwProcID = 0;
+        GetWindowThreadProcessId(hCurWnd, &dwProcID);
+        if (dwProcID == dwProcessID)
+        {
+            hCurWndCorrect = hCurWnd;  // add the found hCurWnd to the vector
+            wprintf(L"Found hWnd %d\n", hCurWnd);
+        }
+    } while (hCurWnd != NULL);
+}
+
 Client client;
 void passStuff(char* buffer, int len)
 {
@@ -21,6 +41,8 @@ int mainThread()
     //freopen_s(&f, "CONIN$", "r", stdin);
 
     //std::cout << "Test" << std::endl;
+
+    GetAllWindowsFromProcessID(GetCurrentProcessId());
 
     detour((char*)0x740C95, hookHpMp_Assembly, 5);
     //detour((char*)0x4751B2, hookSend_Assembly, 5);
