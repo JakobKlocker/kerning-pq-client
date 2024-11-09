@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "maplesaga-kpq-client", "maplesaga-kpq-client\maplesaga-kpq-client.vcxproj", "{3562726B-DCB8-48BD-8C77-0F4DD2E8F0F1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kpq-client", "kpq-client\kpq-client.vcxproj", "{3562726B-DCB8-48BD-8C77-0F4DD2E8F0F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
