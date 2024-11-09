@@ -43,6 +43,7 @@ To gather information on specific game functions, we started by coding a Packet 
   - Auto Loot
   - Teleport to specific (X, Y) coordinates
   - Send Packet
+  - Use Portal
 
 ---
 
