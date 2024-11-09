@@ -1,12 +1,14 @@
 # Party Quest Completer
 
 ## Introduction
-The goal of this project was to **automatically complete the Kerning Party Quest**, which is a party quest in the nostalgic online MMORPG called **Maplestory**. The Party Quest has five stages and requires at least three players to complete.
+The goal of this project was to **automatically complete the Kerning Party Quest**, which is a party quest in the nostalgic online MMORPG called **Maplestory**. The Party Quest has five stages and requires at least three players to complete. 
+
+**At the end of the readme you'll find a video of this project in action**.
 
 ---
 
 ## Architecture
-The architecture of this project is complex, since we had to inject a DLL into each game process. We chose to have each game process listen on a unique TCP port for actions and share Data over Named Shared Memory. Above these individual clients, a managing tool was used to oversee and coordinate the logic of the Party Quest.
+The architecture of this project is complex, since we had¹ to inject a DLL into each game process. We chose to have each game process listen on a unique TCP port for actions and share Data over Named Shared Memory. Above these individual clients, a managing tool was used to oversee and coordinate the logic of the Party Quest.
 
 In this write-up:
 - The **Managing tool** is referred to as the **Server**.
@@ -81,10 +83,14 @@ The Party Quest logic had to be fully managed by the Server. Certain stages requ
 The coding phase was relatively quick, though the code remains somewhat messy due to its Proof of Concept nature. Game hacking involves altering assembly functions and calling existing game functions, which I always enjoy doing. A new aspect I learned was using named shared memory in Windows, which was easier to implement than expected.
 
 ## Watch the Video
-[![Watch the video](https://img.youtube.com/vi/OhxA-pvX-1Q/0.jpg)](https://www.youtube.com/watch?v=OhxA-pvX-1Q)
+
+
+https://github.com/user-attachments/assets/a797c05c-c94d-4a0e-b236-9cccca54c3b5
+
+
+
 
 ---
 
-## Glossary
-¹ - **DLL Injection**: Activating hacks internally is often faster and more efficient.  
+¹ - We wanted to, it's a lot easier and more efficent to have it running internaly  
 ² - **Named Shared Memory**: [Creating Named Shared Memory in Windows](https://learn.microsoft.com/en-us/windows/win32/memory/creating-named-shared-memory)
