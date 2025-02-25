@@ -6,9 +6,7 @@ HWND hCurWnd = NULL;
 HWND hCurWndCorrect = NULL;
 
 void GetAllWindowsFromProcessID(DWORD dwProcessID)
-{
-    // find all hWnds (vhWnds) associated with a process id (dwProcessID)
-    
+{    
     do
     {
         hCurWnd = FindWindowEx(NULL, hCurWnd, NULL, NULL);
@@ -16,7 +14,7 @@ void GetAllWindowsFromProcessID(DWORD dwProcessID)
         GetWindowThreadProcessId(hCurWnd, &dwProcID);
         if (dwProcID == dwProcessID)
         {
-            hCurWndCorrect = hCurWnd;  // add the found hCurWnd to the vector
+            hCurWndCorrect = hCurWnd;
             wprintf(L"Found hWnd %d\n", hCurWnd);
         }
     } while (hCurWnd != NULL);
@@ -34,14 +32,6 @@ void passStuff(char* buffer, int len)
 
 int mainThread() 
 {
-    //Create Console
-    //AllocConsole();
-    //FILE* f;
-    //freopen_s(&f, "CONOUT$", "w+", stdout);
-    //freopen_s(&f, "CONIN$", "r", stdin);
-
-    //std::cout << "Test" << std::endl;
-
     GetAllWindowsFromProcessID(GetCurrentProcessId());
 
     detour((char*)0x740C95, hookHpMp_Assembly, 5);
